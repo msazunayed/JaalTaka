@@ -231,6 +231,12 @@ Input: (batch, 3, 48, 48)
 
 EXIF rotation is automatically corrected before inference.
 
+Output Result: 
+
+https://github.com/user-attachments/assets/8155d4ff-6e24-4ed6-8b1d-6a9d26a85031
+
+
+
 ---
 
 ## License
