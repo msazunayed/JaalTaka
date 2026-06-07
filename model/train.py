@@ -1,19 +1,3 @@
-"""
-Training script for BanknoteCNN.
-
-Usage (run from the project root):
-    python model/train.py
-
-Expected dataset layout:
-    data/
-        real/  note_001.jpg ...
-        fake/  note_001.jpg ...
-
-The script auto-splits images into 70% train / 15% val / 15% test
-and writes them to data_prepared/. Trained weights and metadata are
-saved to model/saved/.
-"""
-
 import os, sys, json, copy, time, random, shutil, argparse
 from pathlib import Path
 
@@ -26,7 +10,7 @@ from torchvision import datasets, transforms
 
 ROOT = Path(__file__).parent.parent
 
-# Fix random seeds for reproducibility
+# Fix random seeds for reproducibility — eigula set na korle data split r training er shomoy randomization hobe, jar fole protibar run korle different results asbe.
 SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
@@ -34,8 +18,7 @@ torch.manual_seed(SEED)
 
 
 class BanknoteCNN(nn.Module):
-    """Same architecture as model/model.py — duplicated here so train.py is self-contained."""
-
+    #Same architecture as model/model.py — duplicated here so train.py is self-contained.
     def __init__(self, num_classes=2):
         super().__init__()
         self.net = nn.Sequential(
@@ -51,6 +34,7 @@ class BanknoteCNN(nn.Module):
         return self.net(x)
 
 
+# ei function ta data split er jono, data_root/{fake,real}/ theke train/val/test te copy korbe
 def prepare_splits(data_root: Path, out_root: Path):
     """
     Copy images from data_root/{fake,real}/ into train/val/test splits
@@ -83,6 +67,7 @@ def prepare_splits(data_root: Path, out_root: Path):
         print(f"  {cls}: {train_end} train  |  {val_end - train_end} val  |  {n - val_end} test")
 
 
+
 def train(data_dir: Path, save_dir: Path, epochs: int, lr: float, batch_size: int):
     device   = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img_size = 48
@@ -107,10 +92,12 @@ def train(data_dir: Path, save_dir: Path, epochs: int, lr: float, batch_size: in
     val_ds   = datasets.ImageFolder(str(data_dir / "val"),   val_tf)
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True,  num_workers=0)
     val_dl   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False, num_workers=0)
+    
 
     class_names = train_ds.classes
     print(f"Classes: {class_names}  |  Train: {len(train_ds)}  |  Val: {len(val_ds)}")
-
+    
+    # hyperparameters and model setup eikhnae
     model     = BanknoteCNN().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -128,18 +115,20 @@ def train(data_dir: Path, save_dir: Path, epochs: int, lr: float, batch_size: in
         model.train()
         train_loss, train_correct = 0.0, 0
         for X, y in train_dl:
-            X, y = X.to(device), y.to(device)
+            X, y = X.to(device), y.to(device)  # Move batch to GPU if available
             optimizer.zero_grad()
             logits = model(X)
-            loss   = criterion(logits, y)
-            loss.backward()
-            optimizer.step()
+            loss   = criterion(logits, y) # Calculate loss
+            loss.backward()  # Backpropagation
+            optimizer.step() # Update weights
             train_loss    += loss.item() * X.size(0)
             train_correct += (logits.argmax(1) == y).sum().item()
 
         train_loss /= len(train_ds)
         train_acc   = train_correct / len(train_ds)
-
+        
+        
+        # ei part ta validation er jono
         # Validation pass
         model.eval()
         val_loss, val_correct = 0.0, 0

@@ -1,12 +1,3 @@
-"""
-Test script — evaluates the saved model on the held-out test set.
-
-Usage (run after training):
-    python model/test.py
-
-Prints overall accuracy, per-class accuracy, and a confusion matrix.
-"""
-
 import sys, json
 from pathlib import Path
 
